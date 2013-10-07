@@ -7,14 +7,17 @@
 
 #ifndef RO_DYNAMIC_HASH_INDEX_H_
 #define RO_DYNAMIC_HASH_INDEX_H_
-#pragma offload_attribute(push, target(mic))
 
-#include "libyskdmu/index/hash_index.h"
+#include "libyskdmu/macro.h"
 #include "libyskdmu/index/ro_hash_index.h"
 
-class RODynamicHashIndex: public ROHashIndex {
+class CLASSDECL RODynamicHashIndex: public ROHashIndex {
 public:
 	RODynamicHashIndex();
+	RODynamicHashIndex(unsigned int* deep, unsigned int* data,
+			unsigned int* data_size, unsigned int* l1_index,
+			unsigned int* l1_index_size, void* l2_index,
+			unsigned int* l2_index_size, HashFunc hash_func = simple_hash_mic);
 	virtual ~RODynamicHashIndex();
 
 	/*
@@ -31,7 +34,21 @@ public:
 	 */
 	virtual pair<unsigned int, void*> locate_index(const char *key,
 			size_t key_length);
-	virtual bool build(HashIndex* original_index);
+	/*
+	 * description: 对象成员数据填充函数，用以一次获取类内所有成员数据
+	 *  parameters: deep:			全局深度
+	 *  			data:			索引数据区指针
+	 *  			data_size:		索引数据区大小
+	 *				l1_index:		一级索引指针
+	 *				l1_index_size:	一级索引大小
+	 *				l2_index：		二级索引指针
+	 *				l2_index_size：	二级索引大小
+	 *      return: 填充是否成功
+	 */
+	virtual bool fill_memeber_data(unsigned int** deep, unsigned int** data,
+			unsigned int** data_size, unsigned int** l1_index,
+			unsigned int** l1_index_size, void** l2_index,
+			unsigned int** l2_index_size);
 	virtual unsigned int get_record_num(const char *key, size_t key_length);
 	virtual unsigned int find_record(unsigned int *records, const char *key,
 			size_t key_length);
@@ -54,9 +71,6 @@ protected:
 	unsigned int m_l1_index_size; //一级索引大小
 	void* m_l2_index; //索引数据块的二级索引
 	unsigned int m_l2_index_size;
-
-	RODynamicHashIndex* m_accard_inst; //offload到加速卡实例化后的指针
 };
 
-#pragma offload_attribute(pop)
 #endif /* RO_DYNAMIC_HASH_INDEX_H_ */
